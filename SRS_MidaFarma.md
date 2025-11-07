@@ -678,23 +678,144 @@ Cabang B → Terima barang (via Aplikasi Terima)
 5. Sync log → Audit trail sinkronisasi
 ```
 
-### 5.2 Tabel Master Data
+### 5.2 Naming Convention & Rules
 
-#### **tab_apotek_mst** — Identitas Apotek/Cabang
+#### **A. Aturan Penamaan Tabel**
+
+**Format:** `[prefix]_[nama]_[suffix]`
+
+| Komponen | Keterangan | Contoh |
+|----------|------------|--------|
+| **Prefix** | `tb_` untuk semua tabel | `tb_` |
+| **Nama** | Nama entitas dalam bahasa Indonesia (lowercase, underscore untuk spasi) | `obat`, `penjualan`, `stok_cabang` |
+| **Suffix** | `_mst` untuk master, `_trx` untuk transaksi header, `_dtl` untuk detail | `_mst`, `_trx`, `_dtl` |
+
+**Contoh:**
+- Master Data: `tb_obat_mst`, `tb_supplier_mst`, `tb_kategori_mst`
+- Transaksi Header: `tb_penjualan_trx`, `tb_pembelian_trx`
+- Transaksi Detail: `tb_penjualan_dtl`, `tb_pembelian_dtl`
+- Tabel Khusus: `tb_stok_cabang`, `tb_log_aktivitas`, `tb_antrian_sync`
+
+#### **B. Aturan Penamaan Field/Column**
+
+**1. Primary Key:**
+- Format: `[nama_entitas]_id`
+- Contoh: `obat_id`, `supplier_id`, `penjualan_id`
+
+**2. Foreign Key:**
+- Format: `[nama_tabel_referensi]_id`
+- Contoh: `supplier_id` (merujuk ke `tb_supplier_mst`)
+
+**3. Field Umum:**
+- Gunakan bahasa Indonesia
+- Lowercase, underscore untuk pemisah kata
+- Hindari singkatan yang tidak jelas
+- Contoh: `nama_obat`, `harga_jual`, `tgl_expired`
+
+**4. Field Boolean:**
+- Prefix: `is_` atau `flag_`
+- Contoh: `is_aktif`, `is_resep`, `flag_deleted`
+
+**5. Field Tanggal/Waktu:**
+- Tanggal: `tgl_[nama]` atau `tanggal_[nama]`
+- Waktu/Timestamp: `waktu_[nama]` atau `[nama]_at`
+- Contoh: `tgl_transaksi`, `tgl_expired`, `waktu_buat`, `created_at`
+
+**6. Field Jumlah/Quantity:**
+- Format: `qty_[nama]` atau `jml_[nama]`
+- Contoh: `qty_stok`, `jml_beli`, `qty_tersedia`
+
+**7. Field Harga/Nominal:**
+- Format: `harga_[jenis]` atau `nominal_[jenis]`
+- Contoh: `harga_beli`, `harga_jual`, `nominal_diskon`
+
+**8. Field Status:**
+- Format: `status_[nama]` atau cukup `status`
+- Contoh: `status`, `status_approval`, `status_kirim`
+
+**9. Field User/Pelaku:**
+- Format: `[aksi]_oleh` atau `[aksi]_by`
+- Contoh: `dibuat_oleh`, `disetujui_oleh`, `created_by`, `approved_by`
+
+#### **C. Tipe Data Standard**
+
+| Jenis Data | Tipe PostgreSQL | Keterangan |
+|------------|-----------------|------------|
+| ID/Primary Key | SERIAL atau BIGSERIAL | Auto-increment integer |
+| Foreign Key | INTEGER atau BIGINT | Sesuai dengan PK yang dirujuk |
+| Kode/Code | VARCHAR(20) | Kode unik (cabang, obat, dll) |
+| Nama/Name | VARCHAR(100-200) | Nama entitas |
+| Deskripsi/Notes | TEXT | Teks panjang |
+| Harga/Nominal | DECIMAL(15,2) | Angka desimal untuk uang |
+| Quantity | INTEGER | Jumlah/qty |
+| Persentase | DECIMAL(5,2) | Persentase (0-100) |
+| Boolean | BOOLEAN | TRUE/FALSE |
+| Tanggal | DATE | Tanggal saja |
+| Timestamp | TIMESTAMP | Tanggal + waktu |
+| JSON | JSONB | Data JSON (lebih cepat query) |
+
+#### **D. Aturan Umum**
+
+1. ✅ **Konsistensi:** Gunakan pola yang sama di semua tabel
+2. ✅ **Bahasa Indonesia:** Prioritaskan bahasa Indonesia yang mudah dipahami
+3. ✅ **Singkatan:** Boleh disingkat jika umum dipahami (qty, tgl, jml, dll)
+4. ✅ **Lowercase:** Semua nama tabel dan field dalam lowercase
+5. ✅ **Underscore:** Gunakan underscore `_` untuk pemisah kata
+6. ✅ **Tidak plural:** Nama tabel singular (bukan `tb_obat_obat_mst` tapi `tb_obat_mst`)
+7. ✅ **Index:** Tambah index untuk field yang sering di-query (FK, status, tanggal)
+8. ❌ **Reserved words:** Hindari kata reserved SQL (user, order, group, dll)
+9. ❌ **Spasi:** Tidak boleh ada spasi dalam nama
+10. ❌ **Karakter khusus:** Hindari karakter khusus kecuali underscore
+
+#### **E. Contoh Lengkap**
+
+```sql
+-- Master Data
+CREATE TABLE tb_obat_mst (
+    obat_id SERIAL PRIMARY KEY,
+    kode_obat VARCHAR(20) UNIQUE NOT NULL,
+    nama_obat VARCHAR(200) NOT NULL,
+    nama_generik VARCHAR(200),
+    kategori_id INTEGER REFERENCES tb_kategori_mst(kategori_id),
+    harga_beli DECIMAL(15,2),
+    harga_jual DECIMAL(15,2),
+    is_aktif BOOLEAN DEFAULT TRUE,
+    dibuat_oleh INTEGER REFERENCES tb_pengguna_mst(pengguna_id),
+    waktu_buat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transaksi
+CREATE TABLE tb_penjualan_trx (
+    penjualan_id SERIAL PRIMARY KEY,
+    no_transaksi VARCHAR(30) UNIQUE NOT NULL,
+    tgl_transaksi TIMESTAMP NOT NULL,
+    cabang_id INTEGER REFERENCES tb_cabang_mst(cabang_id),
+    kasir_id INTEGER REFERENCES tb_pengguna_mst(pengguna_id),
+    nominal_total DECIMAL(15,2),
+    status VARCHAR(20),
+    waktu_buat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+### 5.3 Tabel Master Data
+
+#### **tb_apotek_mst** — Identitas Apotek/Cabang
 | Field | Type | Description |
 |-------|------|-------------|
-| apt_id | VARCHAR(20) PK | Kode apotek/cabang |
-| apt_name | VARCHAR(100) | Nama apotek |
-| address | TEXT | Alamat lengkap |
-| phone | VARCHAR(20) | Telepon |
+| apotek_id | VARCHAR(20) PK | Kode apotek/cabang |
+| nama_apotek | VARCHAR(100) | Nama apotek |
+| alamat | TEXT | Alamat lengkap |
+| telepon | VARCHAR(20) | Telepon |
 | email | VARCHAR(100) | Email |
 | npwp | VARCHAR(30) | NPWP apotek |
-| sia_number | VARCHAR(50) | Nomor SIA (Surat Izin Apotek) |
-| apoteker_name | VARCHAR(100) | Nama apoteker penanggung jawab |
-| sipa_number | VARCHAR(50) | Nomor SIPA apoteker |
-| is_active | BOOLEAN | Status aktif |
-| created_at | TIMESTAMP | Waktu dibuat |
-| updated_at | TIMESTAMP | Waktu update |
+| no_sia | VARCHAR(50) | Nomor SIA (Surat Izin Apotek) |
+| nama_apoteker | VARCHAR(100) | Nama apoteker penanggung jawab |
+| no_sipa | VARCHAR(50) | Nomor SIPA apoteker |
+| is_aktif | BOOLEAN | Status aktif |
+| waktu_buat | TIMESTAMP | Waktu dibuat |
+| waktu_ubah | TIMESTAMP | Waktu update |
 
 #### **tab_cabang_mst** — Data Cabang (untuk multi-branch)
 | Field | Type | Description |
