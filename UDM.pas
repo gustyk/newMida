@@ -22,12 +22,14 @@ type
     CDS_Stock: TClientDataSet;
     Koneksi: TZConnection;
     ZQuery1: TZQuery;
+    procedure DataModuleCreate(Sender: TObject);
     procedure CDS_StockAfterPost(DataSet: TDataSet);
     procedure CDS_StockAfterDelete(DataSet: TDataSet);
   private
     { Private declarations }
   public
     { Public declarations }
+    procedure InisialisasiKoneksi();
   end;
 
 var
@@ -35,7 +37,48 @@ var
 
 implementation
 
+uses UDBSetup;
+
 {$R *.dfm}
+
+// *****************************************************************************
+// Event DataModuleCreate
+// Dipanggil saat DataModule pertama kali dibuat
+// Digunakan untuk inisialisasi koneksi database
+// *****************************************************************************
+procedure TDM.DataModuleCreate(Sender: TObject);
+begin
+  InisialisasiKoneksi();
+end;
+
+// *****************************************************************************
+// Procedure InisialisasiKoneksi
+// Melakukan validasi dan inisialisasi koneksi ke database
+// Jika database belum setup, akan menampilkan pesan error
+// *****************************************************************************
+procedure TDM.InisialisasiKoneksi();
+begin
+  // Pastikan koneksi disconnect dulu
+  if Koneksi.Connected then
+    Koneksi.Disconnect;
+    
+  try
+    // Validasi database dan tabel
+    ValidasiDatabase(Koneksi);
+    
+    // Jika lolos validasi, koneksi sudah connected di ValidasiDatabase
+    if Koneksi.Connected then
+    begin
+      // Koneksi berhasil, tidak perlu pesan
+      // ShowMessage('Koneksi database berhasil!');
+    end;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error saat inisialisasi database: ' + E.Message);
+    end;
+  end;
+end;
 
 procedure TDM.CDS_StockAfterPost(DataSet: TDataSet);
 begin
