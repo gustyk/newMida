@@ -44,7 +44,7 @@ end;
 procedure TFrm_Test.FormShow(Sender: TObject);
 begin
  Koneksi_test.Connect;
- Buka_Query(Query_Test,'Select * From Tab_Obat_dtl');
+ Buka_Query(Query_Test,'Select * From Tab_Mut_Dtl');
  Buka_Query(Query_Mst,'Select * from Tab_Obat_Mst');
 end;
 

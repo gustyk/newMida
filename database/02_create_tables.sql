@@ -2,6 +2,7 @@
 -- Script: 02_create_tables.sql
 -- Deskripsi: Membuat tabel-tabel untuk aplikasi PKasir
 -- Tanggal: 2026-01-13
+-- Update: Menggunakan konsep Mutasi (Tab_Mut_Mst dan Tab_Mut_Dtl)
 -- Catatan: Pastikan database apotek sudah dibuat (jalankan 01_create_database.sql dulu)
 -- *****************************************************************************
 
@@ -28,48 +29,59 @@ CREATE TABLE IF NOT EXISTS `Tab_Obat_Mst` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Data Obat';
 
 -- =============================================================================
--- Tabel: Tab_Obat_Dtl (Detail Transaksi/Stock Obat)
--- Deskripsi: Menyimpan detail transaksi atau pergerakan stock obat
+-- Tabel: Tab_Mut_Mst (Master/Header Mutasi Obat)
+-- Deskripsi: Menyimpan header mutasi obat untuk berbagai keperluan
+-- Kode_Mutasi yang dapat digunakan:
+--   - JUAL      : Penjualan ke customer
+--   - MASUK     : Pembelian/penerimaan obat
+--   - KELUAR    : Pengeluaran obat (non-penjualan)
+--   - RETUR     : Retur dari customer
+--   - OPNAME    : Stock opname
+--   - RUSAK     : Obat rusak
+--   - KADALUARSA: Obat kadaluarsa
+--   - PINDAH    : Pindah lokasi/gudang
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS `Tab_Obat_Dtl` (
+CREATE TABLE IF NOT EXISTS `Tab_Mut_Mst` (
+  `No_Mutasi` VARCHAR(50) NOT NULL,
+  `Tgl_Mutasi` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `Kode_Mutasi` VARCHAR(20) NOT NULL,
+  `Keterangan_Mutasi` VARCHAR(100) DEFAULT NULL,
+  `ID_User` VARCHAR(20) DEFAULT NULL,
+  `Shift` VARCHAR(10) DEFAULT NULL,
+  `Grand_Total` DECIMAL(15,2) DEFAULT 0.00,
+  `Cara_Bayar` ENUM('Tunai','Qris','BCA','BRI','BNI','Hallo DOC','BPJS','Transfer','Kredit') DEFAULT NULL,
+  `Jumlah_Bayar` DECIMAL(15,2) DEFAULT 0.00,
+  `Kembalian` DECIMAL(15,2) DEFAULT 0.00,
+  `Status` ENUM('DRAFT','PENDING','SELESAI','BATAL') DEFAULT 'DRAFT',
+  `Keterangan` TEXT DEFAULT NULL,
+  PRIMARY KEY (`No_Mutasi`),
+  KEY `idx_tanggal` (`Tgl_Mutasi`),
+  KEY `idx_kode` (`Kode_Mutasi`),
+  KEY `idx_user` (`ID_User`),
+  KEY `idx_status` (`Status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Header Mutasi Obat';
+
+-- =============================================================================
+-- Tabel: Tab_Mut_Dtl (Detail Mutasi Obat)
+-- Deskripsi: Menyimpan detail item obat per mutasi (baik keluar maupun masuk)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `Tab_Mut_Dtl` (
   `ID_Detail` INT(11) NOT NULL AUTO_INCREMENT,
+  `No_Mutasi` VARCHAR(50) NOT NULL,
   `ID_Obat` INT(11) NOT NULL,
-  `No_Transaksi` VARCHAR(50) DEFAULT NULL,
-  `Tgl_Transaksi` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `Jenis_Transaksi` ENUM('MASUK','KELUAR','JUAL','RETUR') DEFAULT 'JUAL',
-  `Jumlah` DECIMAL(10,2) DEFAULT 0.00,
-  `Harga` DECIMAL(15,2) DEFAULT 0.00,
+  `Jumlah` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `Harga` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
   `Diskon_Persen` DECIMAL(5,2) DEFAULT 0.00,
   `Diskon_Rupiah` DECIMAL(15,2) DEFAULT 0.00,
   `Embalase` DECIMAL(15,2) DEFAULT 0.00,
   `SubTotal` DECIMAL(15,2) DEFAULT 0.00,
   `Keterangan` VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (`ID_Detail`),
+  KEY `idx_mutasi` (`No_Mutasi`),
   KEY `idx_obat` (`ID_Obat`),
-  KEY `idx_transaksi` (`No_Transaksi`),
-  KEY `idx_tanggal` (`Tgl_Transaksi`),
-  CONSTRAINT `fk_obat_dtl` FOREIGN KEY (`ID_Obat`) REFERENCES `Tab_Obat_Mst` (`ID_Obat`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Detail Transaksi Obat';
-
--- =============================================================================
--- Tabel: Tab_Transaksi_Hdr (Header Transaksi Penjualan)
--- Deskripsi: Menyimpan header/kepala transaksi penjualan
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `Tab_Transaksi_Hdr` (
-  `No_Transaksi` VARCHAR(50) NOT NULL,
-  `Tgl_Transaksi` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `ID_User` VARCHAR(20) DEFAULT NULL,
-  `Shift` VARCHAR(10) DEFAULT NULL,
-  `Grand_Total` DECIMAL(15,2) DEFAULT 0.00,
-  `Cara_Bayar` ENUM('Tunai','Qris','BCA','BRI','BNI','Hallo DOC','BPJS') DEFAULT 'Tunai',
-  `Jumlah_Bayar` DECIMAL(15,2) DEFAULT 0.00,
-  `Kembalian` DECIMAL(15,2) DEFAULT 0.00,
-  `Status` ENUM('PENDING','SELESAI','BATAL') DEFAULT 'SELESAI',
-  `Keterangan` VARCHAR(255) DEFAULT NULL,
-  PRIMARY KEY (`No_Transaksi`),
-  KEY `idx_tanggal` (`Tgl_Transaksi`),
-  KEY `idx_user` (`ID_User`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Header Transaksi Penjualan';
+  CONSTRAINT `fk_mut_dtl_mst` FOREIGN KEY (`No_Mutasi`) REFERENCES `Tab_Mut_Mst` (`No_Mutasi`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_mut_dtl_obat` FOREIGN KEY (`ID_Obat`) REFERENCES `Tab_Obat_Mst` (`ID_Obat`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Detail Mutasi Obat';
 
 -- =============================================================================
 -- Tabel: Tab_User (Master Data User/Kasir)

@@ -51,35 +51,45 @@ mysql -u root -p < 03_initial_data.sql
 | Tgl_Input | DATETIME | Tanggal input data |
 | Tgl_Update | DATETIME | Tanggal terakhir update |
 
-#### Tabel: `Tab_Obat_Dtl` (Detail Transaksi)
+#### Tabel: `Tab_Mut_Mst` (Master/Header Mutasi Obat)
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| No_Mutasi | VARCHAR(50) (PK) | Nomor mutasi unik (format: JUAL-YYYYMMDD-XXXX) |
+| Tgl_Mutasi | DATETIME | Tanggal mutasi |
+| Kode_Mutasi | VARCHAR(20) | JUAL/MASUK/KELUAR/RETUR/OPNAME/RUSAK/KADALUARSA/PINDAH |
+| Keterangan_Mutasi | VARCHAR(100) | Deskripsi singkat mutasi |
+| ID_User | VARCHAR(20) | User yang melakukan mutasi |
+| Shift | VARCHAR(10) | Shift kerja (Pagi/Siang/Malam) |
+| Grand_Total | DECIMAL(15,2) | Total keseluruhan (untuk JUAL) |
+| Cara_Bayar | ENUM | Tunai/Qris/BCA/BRI/BNI/Hallo DOC/BPJS/Transfer/Kredit |
+| Jumlah_Bayar | DECIMAL(15,2) | Jumlah yang dibayar customer (untuk JUAL) |
+| Kembalian | DECIMAL(15,2) | Kembalian (untuk JUAL) |
+| Status | ENUM | DRAFT/PENDING/SELESAI/BATAL |
+| Keterangan | TEXT | Catatan lengkap mutasi |
+
+**Kode Mutasi yang dapat digunakan:**
+- **JUAL**: Penjualan ke customer (mengurangi stok)
+- **MASUK**: Pembelian/penerimaan obat dari supplier (menambah stok)
+- **KELUAR**: Pengeluaran obat non-penjualan (mengurangi stok)
+- **RETUR**: Retur dari customer (menambah stok)
+- **OPNAME**: Stock opname (koreksi stok)
+- **RUSAK**: Obat rusak (mengurangi stok)
+- **KADALUARSA**: Obat kadaluarsa (mengurangi stok)
+- **PINDAH**: Pindah lokasi/gudang (tidak mengubah stok total)
+
+#### Tabel: `Tab_Mut_Dtl` (Detail Mutasi Obat)
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
 | ID_Detail | INT (PK, AI) | ID unik detail |
+| No_Mutasi | VARCHAR(50) (FK) | Referensi ke Tab_Mut_Mst |
 | ID_Obat | INT (FK) | Referensi ke Tab_Obat_Mst |
-| No_Transaksi | VARCHAR(50) | Nomor transaksi |
-| Tgl_Transaksi | DATETIME | Tanggal transaksi |
-| Jenis_Transaksi | ENUM | MASUK/KELUAR/JUAL/RETUR |
-| Jumlah | DECIMAL(10,2) | Jumlah obat |
+| Jumlah | DECIMAL(10,2) | Jumlah obat (+ untuk masuk, - untuk keluar) |
 | Harga | DECIMAL(15,2) | Harga per unit |
 | Diskon_Persen | DECIMAL(5,2) | Diskon dalam persen (%) |
 | Diskon_Rupiah | DECIMAL(15,2) | Diskon dalam rupiah |
 | Embalase | DECIMAL(15,2) | Biaya embalase |
 | SubTotal | DECIMAL(15,2) | SubTotal = (Harga × Jumlah) - Diskon + Embalase |
-| Keterangan | VARCHAR(255) | Catatan tambahan |
-
-#### Tabel: `Tab_Transaksi_Hdr` (Header Transaksi)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| No_Transaksi | VARCHAR(50) (PK) | Nomor transaksi (format: TRX-YYYYMMDD-XXXX) |
-| Tgl_Transaksi | DATETIME | Tanggal transaksi |
-| ID_User | VARCHAR(20) | User yang melakukan transaksi |
-| Shift | VARCHAR(10) | Shift kerja (Pagi/Siang/Malam) |
-| Grand_Total | DECIMAL(15,2) | Total keseluruhan |
-| Cara_Bayar | ENUM | Tunai/Qris/BCA/BRI/BNI/Hallo DOC/BPJS |
-| Jumlah_Bayar | DECIMAL(15,2) | Jumlah yang dibayar customer |
-| Kembalian | DECIMAL(15,2) | Kembalian |
-| Status | ENUM | PENDING/SELESAI/BATAL |
-| Keterangan | VARCHAR(255) | Catatan transaksi |
+| Keterangan | VARCHAR(255) | Catatan tambahan per item |
 
 #### Tabel: `Tab_User` (Master User)
 | Kolom | Tipe | Keterangan |
@@ -106,8 +116,8 @@ SHOW TABLES;
 
 -- Cek struktur tabel
 DESCRIBE Tab_Obat_Mst;
-DESCRIBE Tab_Obat_Dtl;
-DESCRIBE Tab_Transaksi_Hdr;
+DESCRIBE Tab_Mut_Mst;
+DESCRIBE Tab_Mut_Dtl;
 DESCRIBE Tab_User;
 
 -- Cek data awal
@@ -168,4 +178,41 @@ ALTER TABLE Tab_Obat_Mst ADD COLUMN Barcode VARCHAR(50) AFTER Nama_Obat;
 
 **Error: Foreign key constraint fails**
 - Pastikan menjalankan script secara berurutan
-- Tab_Obat_Mst harus dibuat dulu sebelum Tab_Obat_Dtl
+- Tab_Obat_Mst dan Tab_Mut_Mst harus dibuat dulu sebelum Tab_Mut_Dtl
+
+## 💡 Konsep Mutasi
+
+Sistem menggunakan konsep **Mutasi** untuk semua pergerakan obat:
+- **Header Mutasi** (`Tab_Mut_Mst`) menyimpan informasi umum: siapa, kapan, jenis mutasi apa
+- **Detail Mutasi** (`Tab_Mut_Dtl`) menyimpan item-item obat yang terlibat dalam mutasi tersebut
+
+**Contoh Penggunaan:**
+
+**Penjualan (JUAL):**
+```
+Tab_Mut_Mst:
+  No_Mutasi: JUAL-20260113-0001
+  Kode_Mutasi: JUAL
+  Grand_Total: 50000
+  Cara_Bayar: Tunai
+  Status: SELESAI
+
+Tab_Mut_Dtl:
+  - Paracetamol, Jumlah: 2, Harga: 5000, SubTotal: 10000
+  - OBH Combi, Jumlah: 2, Harga: 20000, SubTotal: 40000
+```
+
+**Pembelian (MASUK):**
+```
+Tab_Mut_Mst:
+  No_Mutasi: MASUK-20260113-0001
+  Kode_Mutasi: MASUK
+  Keterangan_Mutasi: Pembelian dari PT Kimia Farma
+  Status: SELESAI
+
+Tab_Mut_Dtl:
+  - Paracetamol, Jumlah: 100, Harga: 4000
+  - Amoxicillin, Jumlah: 50, Harga: 12000
+```
+
+Sistem ini fleksibel untuk berbagai jenis mutasi stok!

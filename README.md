@@ -94,9 +94,11 @@ Setelah menjalankan `03_initial_data.sql`:
 
 ### Tabel Utama:
 1. **Tab_Obat_Mst** - Master data obat
-2. **Tab_Obat_Dtl** - Detail transaksi obat
-3. **Tab_Transaksi_Hdr** - Header transaksi penjualan
+2. **Tab_Mut_Mst** - Master/Header mutasi obat (JUAL/MASUK/KELUAR/RETUR/dll)
+3. **Tab_Mut_Dtl** - Detail mutasi obat per item
 4. **Tab_User** - Master user/kasir
+
+**Konsep Mutasi:** Semua pergerakan obat (penjualan, pembelian, retur, rusak, dll) menggunakan sistem mutasi dengan header (`Tab_Mut_Mst`) dan detail (`Tab_Mut_Dtl`).
 
 Lihat detail struktur di: [database/README.md](database/README.md)
 

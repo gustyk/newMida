@@ -133,16 +133,16 @@ begin
       PesanError := PesanError + '- Tabel "Tab_Obat_Mst" belum dibuat' + #13#10;
     end;
     
-    if not CekTabelAda(Koneksi, 'Tab_Obat_Dtl') then
+    if not CekTabelAda(Koneksi, 'Tab_Mut_Mst') then
     begin
       AdaError := True;
-      PesanError := PesanError + '- Tabel "Tab_Obat_Dtl" belum dibuat' + #13#10;
+      PesanError := PesanError + '- Tabel "Tab_Mut_Mst" belum dibuat' + #13#10;
     end;
     
-    if not CekTabelAda(Koneksi, 'Tab_Transaksi_Hdr') then
+    if not CekTabelAda(Koneksi, 'Tab_Mut_Dtl') then
     begin
       AdaError := True;
-      PesanError := PesanError + '- Tabel "Tab_Transaksi_Hdr" belum dibuat' + #13#10;
+      PesanError := PesanError + '- Tabel "Tab_Mut_Dtl" belum dibuat' + #13#10;
     end;
     
     if not CekTabelAda(Koneksi, 'Tab_User') then
