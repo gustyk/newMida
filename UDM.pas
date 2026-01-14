@@ -3,9 +3,10 @@ unit UDM;
 interface
 
 uses
-  SysUtils, Classes, ZAbstractConnection, ZConnection, DB,
+  SysUtils, Classes, Dialogs, ZAbstractConnection, ZConnection, DB,
   ZAbstractRODataset, ZAbstractDataset, ZDataset, DBClient, Provider,
-  MemDS, VirtualTable, ZAbstractTable;
+  MemDS, ZAbstractTable;
+  // VirtualTable; // Comment dulu jika UNIDAC belum ter-install
 
 type
   TDM = class(TDataModule)
