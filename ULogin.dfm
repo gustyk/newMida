@@ -68,13 +68,16 @@ object Frm_Login: TFrm_Login
     Top = 80
     Width = 121
     Height = 28
+    PasswordChar = '*'
     TabOrder = 2
   end
-  object edt_Shift: TEdit
+  object Cmb_Shift: TComboBox
     Left = 144
     Top = 112
     Width = 121
     Height = 28
+    Style = csDropDownList
+    ItemHeight = 20
     TabOrder = 3
   end
 end

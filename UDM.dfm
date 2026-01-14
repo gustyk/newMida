@@ -1,6 +1,5 @@
 object DM: TDM
   OldCreateOrder = False
-  OnCreate = DataModuleCreate
   Left = 190
   Top = 117
   Height = 292
@@ -33,7 +32,7 @@ object DM: TDM
     Top = 16
   end
   object VT: TVirtualTable
-    Active = False
+    Active = True
     FieldDefs = <
       item
         Name = 'No'
@@ -102,14 +101,14 @@ object DM: TDM
   end
   object TabObtDet: TZTable
     Connection = Koneksi
-    TableName = 'Tab_Obat_Dtl'
+    TableName = 'tab_obat_dtl'
     Left = 72
     Top = 112
   end
   object Que_stock: TZQuery
     Connection = Koneksi
     SQL.Strings = (
-      'select * from Tab_Obat_Dtl')
+      'select * from Tab_Obat_dtl')
     Params = <>
     Left = 72
     Top = 64
@@ -137,7 +136,7 @@ object DM: TDM
     AutoEncodeStrings = False
     Properties.Strings = (
       'RawStringEncoding=DB_CP')
-    Connected = False
+    Connected = True
     HostName = 'localhost'
     Port = 3306
     Database = 'apotek'

@@ -61,6 +61,7 @@ type
       Shift: TShiftState);
   private
     { Private declarations }
+    procedure LoadDataObat();  // Load semua data obat
   public
     { Public declarations }
   end;
@@ -86,25 +87,79 @@ begin
   Application.Terminate;
 end;
 
+// *****************************************************************************
+// Procedure FormShow
+// Event handler saat form ditampilkan pertama kali
+// Menampilkan form login terlebih dahulu
+// *****************************************************************************
 procedure TFrm_Jual.FormShow(Sender: TObject);
 begin
-//  Edt_Obat.SetFocus;
+  // FRM_Login.show;  // Kode lama: langsung show login
+  
+  // Show form login dulu sebelum load data
+  // Data akan di-load setelah login berhasil atau di FormActivate
   FRM_Login.show;
+  
+  // Load data obat setelah form login ditutup
+  LoadDataObat();
 end;
 
 // *****************************************************************************
-// Jika ada perubahan di Edt_Obat maka Grid Obat akan menampilkan sesuai dengan
-// Yang dipilih
+// Procedure LoadDataObat
+// Menampilkan semua data obat ke Grid_Obat
+// Dipanggil saat form dibuka atau saat Edt_Obat kosong
+// *****************************************************************************
+procedure TFrm_Jual.LoadDataObat();
+begin
+  with DM do
+  begin
+    CDS_Obat.Active := false;
+    Que_Obat.SQL.Text := 'SELECT ID_Obat, Nama_obat, harga, lokasi ' +
+                         'FROM Tab_Obat_mst ' +
+                         'ORDER BY Nama_obat';  // Urutkan berdasarkan nama obat
+    Que_Obat.Open;
+    CDS_Obat.Active := true;
+  end;
+end;
+
+// *****************************************************************************
+// Procedure Edt_ObatChange
+// Event handler saat ada perubahan di Edt_Obat
+// Melakukan filtering data obat berdasarkan nama (case insensitive)
+// Jika kosong, tampilkan semua data obat
 // *****************************************************************************
 procedure TFrm_Jual.Edt_ObatChange(Sender: TObject);
+var
+  Kata_Cari: string;
 begin
- DM.CDS_Obat.Active := false;
- DM.Que_Obat.SQL.Text  := format('(select ID_Obat, Nama_obat, '+
- 'harga, lokasi from Tab_Obat_mst'+
- ' where Nama_obat LIKE ''%s'')',[edt_Obat.Text+'%'] );
- DM.Que_Obat.Open;
- DM.CDS_Obat.Active := true;
-
+  Kata_Cari := Trim(edt_Obat.Text);
+  
+  // Jika pencarian kosong, tampilkan semua data
+  if Kata_Cari = '' then
+  begin
+    LoadDataObat();
+    Exit;
+  end;
+  
+  // Filter data obat berdasarkan nama (case insensitive menggunakan UPPER)
+  with DM do
+  begin
+    CDS_Obat.Active := false;
+    // Que_Obat.SQL.Text  := format('(select ID_Obat,Nama_Obat,'+ // Kode lama: field name salah
+    // 'Harga,Lokasi from Tab_Obat_mst'+
+    // ' where Nama_Obat LIKE ''%s'')',[edt_Obat.Text+'%'] );
+    
+    // Query baru dengan field name yang benar dan case insensitive
+    Que_Obat.SQL.Text := Format(
+      'SELECT ID_Obat, Nama_obat, harga, lokasi ' +
+      'FROM Tab_Obat_mst ' +
+      'WHERE UPPER(Nama_obat) LIKE UPPER(''%s'') ' +
+      'ORDER BY Nama_obat',
+      [Kata_Cari + '%']
+    );
+    Que_Obat.Open;
+    CDS_Obat.Active := true;
+  end;
 end;
 
 procedure TFrm_Jual.Grid_ObatDblClick(Sender: TObject);
@@ -113,10 +168,10 @@ begin
   begin
    VT.Active := True;
    VT.Append;
-   VT.FieldByName('ID_OBAT').Asinteger := CDS_Obat.fieldbyName('ID_Obat').asinteger;
-   VT.FieldByName('Nama_Obat').AsString := CDS_Obat.fieldbyName('Nama_obat').AsString;
-   VT.FieldByName('Harga').AsString := CDS_Obat.fieldbyName('harga').AsString;
-   VT.FieldByName('JUMLAH').AsString := '1';     // default = 1;
+   VT.FieldByName('ID_OBAT').Asinteger := CDS_Obat.fieldbyName('ID_OBAT').asinteger;
+   VT.FieldByName('Nama_Obat').AsString := CDS_Obat.fieldbyName('NAMA_OBAT').AsString;
+   VT.FieldByName('Harga').AsString := CDS_Obat.fieldbyName('HARGA').AsString;
+   VT.FieldByName('JUMLAH').AsString := '1';     // devoult = 1;
    Grid_Jual.EditorMode := true;               // Warna jadi biru
    Grid_JUal.Fields[3].FocusControl;            // Ke kolom Jumlah
   end;

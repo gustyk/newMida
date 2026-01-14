@@ -1,254 +1,176 @@
-# Database Management - PKasir
+# Database Setup - Apotek Kasir System
 
-## 📋 Deskripsi
-Folder ini berisi SQL scripts untuk setup database aplikasi PKasir (Point of Sales Apotek).
+## 📋 Daftar File SQL
 
-**Catatan Penting:** Database dikembangkan secara **bertahap** sesuai kebutuhan pengembangan kode, bukan dibuat ideal dari awal.
+### 1. **00_check_database.sql**
+**Deskripsi:** Script validasi untuk memeriksa status database  
+**Fungsi:** 
+- Cek koneksi ke server MySQL
+- Verifikasi database 'apotek' sudah dibuat
+- Validasi struktur tabel (Tab_User, Tab_Obat_Mst, Tab_Obat_Dtl, Tab_Mut_Mst, Tab_Mut_Dtl)
+- Hitung jumlah record di tiap tabel
 
-## 🚀 Cara Setup Database (Komputer Baru)
+**Kapan Digunakan:** Sebelum atau sesudah instalasi untuk memastikan database setup dengan benar
 
-### Metode 1: Via phpMyAdmin
-1. Buka phpMyAdmin di browser: `http://localhost/phpmyadmin`
-2. Login dengan user `root` (password: kosong atau sesuai setting)
-3. Klik tab **SQL**
-4. Jalankan script secara berurutan:
-   - Copy-paste isi `01_create_database.sql` → Execute
-   - Copy-paste isi `02_create_tables.sql` → Execute
-   - Copy-paste isi `03_initial_data.sql` → Execute (optional)
+---
 
-### Metode 2: Via Command Line MySQL
+### 2. **01_create_database.sql**
+**Deskripsi:** Script untuk membuat database  
+**Fungsi:**
+- DROP DATABASE IF EXISTS (hati-hati, akan hapus semua data!)
+- CREATE DATABASE `apotek`
+- SET CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+
+**Kapan Digunakan:** Instalasi fresh/baru pertama kali
+
+---
+
+### 3. **02_create_tables.sql**
+**Deskripsi:** Script untuk membuat struktur tabel  
+**Fungsi:**
+- CREATE TABLE `Tab_User` (master user login)
+- CREATE TABLE `Tab_Obat_Mst` (master data obat)
+- CREATE TABLE `Tab_Obat_Dtl` (detail stok obat)
+- CREATE TABLE `Tab_Mut_Mst` (master transaksi)
+- CREATE TABLE `Tab_Mut_Dtl` (detail transaksi)
+- Semua dengan IF NOT EXISTS (aman dijalankan berulang kali)
+
+**Kapan Digunakan:** Setelah database dibuat (step 2)
+
+---
+
+### 4. **03_initial_data.sql** ⭐
+**Deskripsi:** Script insert data awal (PRODUCTION DATA)  
+**Fungsi:**
+- INSERT 4 user default (a/a, admin/admin123, kasir1/kasir123, kasir2/kasir123)
+- INSERT 5609 data obat dari database existing (mfkalimantan.tab_obt_mst)
+- Data obat lengkap dengan harga, stok minimum, dan lokasi
+
+**Sumber Data:**  
+Migrasi dari database existing mfkalimantan.tab_obt_mst pada tanggal 2025-01-14
+
+**Ukuran File:** ~318 KB (5652 baris)
+
+**Column Mapping:**
+- OBT_ID → ID_Obat
+- OBT_NM → Nama_obat  
+- OBT_CATEGORY → Golongan (banyak yang NULL, perlu diisi manual)
+- PRC_RETAIL → harga
+- STOCK_MINIMAL → Minimum
+- STOCK_LOCATION → lokasi
+
+**Kapan Digunakan:** Setelah tabel dibuat (step 3) untuk populate data awal
+
+---
+
+### 5. **tab_obat_mst.sql** (Reference Only)
+**Deskripsi:** Export phpMyAdmin dari database production  
+**Fungsi:** File reference/backup, sudah diintegrasikan ke 03_initial_data.sql  
+**Status:** Tidak perlu dijalankan, hanya untuk dokumentasi
+
+---
+
+## 🚀 Cara Instalasi Database (Fresh Install)
+
+### Option A: Via phpMyAdmin
+1. Buka phpMyAdmin → klik "Import"
+2. Import file berurutan:
+   ```
+   01_create_database.sql
+   02_create_tables.sql
+   03_initial_data.sql
+   ```
+3. Jalankan 00_check_database.sql untuk verifikasi
+
+### Option B: Via MySQL Command Line
 ```bash
-# Masuk ke folder database
-cd "c:\Apps\Mida050125\Proyek 2025\database"
-
-# Jalankan script berurutan
 mysql -u root -p < 01_create_database.sql
-mysql -u root -p < 02_create_tables.sql
-mysql -u root -p < 03_initial_data.sql
+mysql -u root -p apotek < 02_create_tables.sql
+mysql -u root -p apotek < 03_initial_data.sql
+mysql -u root -p apotek < 00_check_database.sql
 ```
 
-## 📂 Daftar File SQL
-
-| File | Deskripsi | Wajib? |
-|------|-----------|--------|
-| `01_create_database.sql` | Membuat database `apotek` | ✅ Ya |
-| `02_create_tables.sql` | Membuat 5 tabel dasar | ✅ Ya |
-| `03_initial_data.sql` | Data awal untuk testing | ⚪ Optional |
-
-## 🗄️ Struktur Database (Tahap Awal)
-
-### Database: `apotek`
-
-Pada tahap pengembangan ini, database memiliki **5 tabel**:
+### Option C: Via Delphi/Aplikasi
+- Gunakan ZConnection untuk eksekusi script SQL
+- Atau manual copy-paste query ke SQL Query panel
 
 ---
 
-#### Tabel 1: `Tab_User` (Master Data User)
-Daftar pengguna untuk login ke sistem.
+## 📊 Struktur Data Setelah Setup
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| **nama** | VARCHAR(50) PK | Username untuk login |
-| **password** | VARCHAR(50) | Password user |
-| **shift** | VARCHAR(20) | Shift kerja (Pagi/Siang/Malam) |
-
----
-
-#### Tabel 2: `Tab_Obat_Mst` (Master Data Obat)
-Header data obat dengan informasi lengkap harga dan stok.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| **OBT_ID** | INT(11) PK | ID unik obat |
-| **OBT_NM** | VARCHAR(30) | Nama obat |
-| OBT_CATEGORY | VARCHAR(15) | Kategori obat |
-| PRC_RETAIL | DOUBLE | Harga jual retail |
-| PRC_PURCNET | DOUBLE | Harga beli netto |
-| OBT_QTY | DOUBLE | Quantity/jumlah stok |
-| OBT_MINQTY | DOUBLE | Stok minimum |
-| BOX_CONTAIN | INT(11) | Isi per box |
-| SatuanEcer | VARCHAR(15) | Satuan ecer (Strip/Botol/dll) |
-| PRC_BOX | DOUBLE(15,3) | Harga per box |
-| OBT_LOCATION | VARCHAR(10) | Lokasi penyimpanan |
-| MODIFY | INT(11) | Flag modifikasi |
-| EMP_ID | INT(11) | ID employee yang input |
-| STOCK_OP | INT(11) | Stock opname |
-| BARCODE | VARCHAR(15) | Barcode obat |
-| CODE | VARCHAR(15) | Kode obat |
-| LAST_ORDER | INT(11) | Pesanan terakhir |
+| Tabel | Jumlah Record | Deskripsi |
+|-------|--------------|-----------|
+| Tab_User | 4 | User login (a, admin, kasir1, kasir2) |
+| Tab_Obat_Mst | 5609 | Master data obat (dari database existing) |
+| Tab_Obat_Dtl | 0 | Detail stok (kosong, diisi saat transaksi) |
+| Tab_Mut_Mst | 0 | Master transaksi (kosong) |
+| Tab_Mut_Dtl | 0 | Detail transaksi (kosong) |
 
 ---
 
-#### Tabel 3: `Tab_Obat_Dtl` (Detail Stok Obat)
-Detail stok obat per item.
+## ⚠️ Catatan Penting
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| **ID_STOCK** | INT(11) PK AI | ID unique stok |
-| ID_OBAT | INT(11) | Referensi ke OBT_ID di Tab_Obat_Mst |
-| STOCK | DECIMAL(10,0) | Jumlah stok |
-| BARCODE | VARCHAR(15) | Barcode item |
+1. **Backup dulu sebelum DROP DATABASE!**  
+   File `01_create_database.sql` akan menghapus database existing jika ada.
 
----
+2. **Password Plain Text**  
+   User password disimpan plain text. Untuk production sebaiknya gunakan MD5/SHA hash.
 
-#### Tabel 4: `Tab_Mut_Mst` (Header Mutasi Stok)
-Header/kepala dari mutasi stok obat (keluar/masuk).
+3. **Data Obat - Golongan NULL**  
+   Banyak field `Golongan` bernilai NULL karena dari database sumber. Perlu diisi manual sesuai kebutuhan.
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| MUT_ID | VARCHAR(13) | ID mutasi unik |
-| **MUT_TYPE** | VARCHAR(2) | Jenis mutasi (01=Beli, 02=Jual, dst) |
-| MUT_INPDATE | DATETIME | Tanggal input mutasi |
-| FAK_NO | VARCHAR(30) | Nomor faktur |
-| FAK_DATE | DATETIME | Tanggal faktur |
-| SUP_ID | VARCHAR(3) | ID supplier |
-| MUT_VALUE | DOUBLE(15,3) | Nilai mutasi |
-| PPN | DOUBLE(15,3) | Nilai PPN |
-| PPN_INCLUDED | TINYINT(1) | PPN sudah termasuk? |
-| PAY_TYPE | VARCHAR(1) | Tipe pembayaran (C=Cash, dll) |
-| PAY_DATE | DATETIME | Tanggal pembayaran |
-| MUT_TO | VARCHAR(25) | Mutasi ke siapa/mana |
-| REQ_ID | VARCHAR(20) | ID permintaan |
-| EMP_ID | INT(11) | ID employee |
-| IS_LOCKED | TINYINT(4) | Status locked |
-| MUT_STATUS | INT(4) | Status mutasi |
-| jenis_nota | VARCHAR(20) | Jenis nota |
+4. **ID_Obat Manual**  
+   ID_Obat tidak auto-increment, menggunakan ID dari database sumber untuk consistency.
 
-**Kode MUT_TYPE (contoh):**
-- `01` = Pembelian/Stock In
-- `02` = Penjualan/Stock Out
-- `03` = Retur
-- `04` = Pindah gudang
-- Dan seterusnya sesuai kebutuhan
+5. **Character Encoding**  
+   Database menggunakan utf8mb4_unicode_ci untuk support karakter khusus.
 
 ---
 
-#### Tabel 5: `Tab_Mut_Dtl` (Detail Mutasi Stok)
-Detail item obat per mutasi dengan perhitungan harga lengkap.
+## 🔧 Troubleshooting
 
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| **MUT_NO** | INT(11) PK AI | Nomor urut mutasi |
-| MUT_ID | VARCHAR(20) | Referensi ke MUT_ID di Tab_Mut_Mst |
-| OBT_ID | INT(11) | Referensi ke OBT_ID di Tab_Obat_Mst |
-| OBT_NM | VARCHAR(30) | Nama obat (denormalisasi) |
-| PRC_BOX | DOUBLE(15,3) | Harga per box |
-| OBT_QTY | DOUBLE | Quantity obat |
-| PRC_BON | INT(11) | Harga bonus |
-| PRC_DISCNUM | DOUBLE(15,3) | Diskon nominal |
-| PRC_DISCPERC | DOUBLE(15,3) | Diskon persentase |
-| PUR_TOT | DOUBLE(15,3) | Total pembelian |
-| PRC_PURCNET | DOUBLE(15,3) | Harga beli netto |
-| PRC_PURCGROSS | DOUBLE(15,3) | Harga beli gross |
-| PRC_PURCNET_TOT | DOUBLE(15,3) | Total harga beli netto |
-| PRC_RETAIL | DOUBLE(15,3) | Harga retail |
-| BOX_QTY | DOUBLE(15,3) | Quantity box |
-| BOX_CONTAIN | INT(11) | Isi per box |
-| PPN_FLAG | DOUBLE | Flag PPN |
-| OBT_LOCATION | VARCHAR(5) | Lokasi obat |
-| EMP_ID | INT(11) | ID employee |
-| STOK | INT(11) | Stok saat ini |
-| RET_MUT_ID | VARCHAR(30) | ID mutasi retur |
-| MUT_DATE | DATETIME | Tanggal mutasi |
-| MUT_STATUS | INT(11) | Status mutasi |
-| MUT_TYPE | INT(11) | Tipe mutasi |
-| PRC_RETAIL_TOT | DOUBLE | Total harga retail |
-| PRC_RETAILNET_TOT | DOUBLE | Total harga retail netto |
-| EMBALASE | DOUBLE | Biaya embalase |
+### Error: "Table already exists"
+- Normal jika jalankan script berulang kali
+- Script menggunakan `CREATE TABLE IF NOT EXISTS` dan `INSERT IGNORE`
+
+### Error: "Duplicate entry"
+- Normal jika data sudah ada
+- Script menggunakan `INSERT IGNORE` untuk skip duplicate
+
+### Error: "Unknown database 'apotek'"
+- Pastikan sudah jalankan `01_create_database.sql` terlebih dahulu
+
+### Data obat tidak muncul di aplikasi
+1. Jalankan query: `SELECT COUNT(*) FROM Tab_Obat_Mst;`
+2. Harusnya return 5609 records
+3. Check koneksi ZConnection di aplikasi
+4. Pastikan DataSource terhubung dengan benar
 
 ---
 
-## 🔧 Verifikasi Database
+## 📝 Log Perubahan
 
-Setelah menjalankan script, verifikasi dengan query berikut di phpMyAdmin:
+**2025-01-14**
+- ✅ Migrasi 5609 data obat dari mfkalimantan.tab_obt_mst
+- ✅ Konsolidasi 03_initial_data.sql dengan data production
+- ✅ Hapus file temporary (04_import_from_existing.sql, 05_export_current_data.sql)
+- ✅ Update dokumentasi README
 
-```sql
--- Cek database
-SHOW DATABASES LIKE 'apotek';
+**2025-01-13**
+- ✅ Setup struktur database awal
+- ✅ Buat file 01, 02, 03 untuk instalasi fresh
 
--- Cek tabel
-USE apotek;
-SHOW TABLES;
+---
 
--- Cek struktur tabel
-DESCRIBE Tab_User;
-DESCRIBE Tab_Obat_Mst;
-DESCRIBE Tab_Obat_Dtl;
-DESCRIBE Tab_Mut_Mst;
-DESCRIBE Tab_Mut_Dtl;
+## 💡 Tips
 
--- Cek data awal
-SELECT * FROM Tab_User;
-SELECT * FROM Tab_Obat_Mst;
-SELECT * FROM Tab_Obat_Dtl;
-```
+- Untuk testing, gunakan user `a` dengan password `a` (paling cepat)
+- Untuk demo, gunakan user `admin` dengan password `admin123`
+- Data obat bisa di-filter di form UAjar.pas dengan cara ketik nama obat
+- Aplikasi support pencarian case-insensitive dengan UPPER()
 
-## 📝 Catatan Penting
+---
 
-1. **Database Bertahap**: Struktur database akan berkembang sesuai kebutuhan kode. Ini bukan design ideal dari awal, tapi disesuaikan dengan kebutuhan pengguna.
-
-2. **Backup Database**: Sebelum menjalankan perubahan, backup dulu database:
-   ```sql
-   mysqldump -u root -p apotek > backup_apotek_YYYYMMDD.sql
-   ```
-
-3. **Restore Database**:
-   ```bash
-   mysql -u root -p apotek < backup_apotek_YYYYMMDD.sql
-   ```
-
-4. **Password Default**:
-   - User: `admin`, Password: `admin123`, Shift: `Pagi`
-   - User: `kasir1`, Password: `kasir123`, Shift: `Pagi`
-   - User: `kasir2`, Password: `kasir123`, Shift: `Siang`
-   - **⚠️ GANTI PASSWORD setelah setup!**
-
-5. **Koneksi di Delphi**:
-   - Host: `localhost`
-   - Port: `3306`
-   - Database: `apotek`
-   - User: `root`
-   - Password: (sesuaikan dengan setting MySQL Anda)
-
-## 🔄 Pengembangan Database Selanjutnya
-
-Ketika ada penambahan tabel atau perubahan struktur:
-1. Buat file baru: `04_alter_xxx.sql` atau `05_create_xxx.sql`
-2. Commit ke Git dengan deskripsi jelas
-3. Update dokumentasi ini
-4. Informasikan ke tim developer lain
-
-Contoh:
-```sql
--- 04_add_table_supplier.sql
-USE apotek;
-CREATE TABLE IF NOT EXISTS Tab_Supplier (
-  SUP_ID VARCHAR(3) PRIMARY KEY,
-  SUP_NAME VARCHAR(50),
-  ...
-);
-```
-
-## ⚠️ Troubleshooting
-
-**Error: Database already exists**
-- Tidak masalah, script menggunakan `CREATE IF NOT EXISTS`
-
-**Error: Table already exists**
-- Tidak masalah, script menggunakan `CREATE TABLE IF NOT EXISTS`
-
-**Error: Access denied**
-- Pastikan user MySQL memiliki privilege yang cukup
-- Gunakan user `root` atau user dengan `GRANT ALL PRIVILEGES`
-
-## 💡 Konsep Nama Field
-
-Database ini menggunakan konvensi penamaan yang **existing/legacy**:
-- `OBT_` = Obat (medicine)
-- `PRC_` = Price (harga)
-- `MUT_` = Mutasi (mutation/movement)
-- `SUP_` = Supplier
-- `EMP_` = Employee
-- `FAK_` = Faktur (invoice)
-
-Pertahankan konvensi ini untuk konsistensi dengan sistem yang sudah berjalan.
+**Dibuat oleh:** GitHub Copilot  
+**Tanggal:** 14 Januari 2025  
+**Stack:** Delphi 7 + MySQL + ZeosLib + UNIDAC TVirtualTable

@@ -1,36 +1,46 @@
--- *****************************************************************************
--- Script: 03_initial_data.sql
--- Deskripsi: Insert data awal untuk sistem kasir apotek
--- Tanggal: 2025-01-14
--- Catatan: File ini berisi data produksi lengkap
---          - 4 user (untuk testing & produksi)
---          - 5609 data obat (dari database existing mfkalimantan)
--- Sumber Data Obat: Diambil dari database existing mfkalimantan.tab_obt_mst
---                   Migrasi pada tanggal 2025-01-14 via phpMyAdmin export
--- *****************************************************************************
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Waktu pembuatan: 14 Jan 2026 pada 09.10
+-- Versi server: 10.4.32-MariaDB
+-- Versi PHP: 8.2.12
 
-USE `apotek`;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- =============================================================================
--- Insert User Default
--- Password disimpan plain text (untuk testing)
--- Untuk produksi, sebaiknya gunakan hash password (MD5/SHA)
--- =============================================================================
-INSERT IGNORE INTO `Tab_User` (`nama`, `password`, `shift`) VALUES
-('a', 'a', 'Pagi'),
-('admin', 'admin123', 'Pagi'),
-('kasir1', 'kasir123', 'Pagi'),
-('kasir2', 'kasir123', 'Siang');
 
--- =============================================================================
--- Insert Data Obat Master - Total 5609 records
--- Data berasal dari database existing (mfkalimantan.tab_obt_mst)
--- Column mapping: OBT_ID->ID_Obat, OBT_NM->Nama_obat, OBT_CATEGORY->Golongan,
---                 PRC_RETAIL->harga, STOCK_MINIMAL->Minimum, STOCK_LOCATION->lokasi
--- ID_Obat: Auto-generated dari database sumber, di-preserve untuk consistency
--- Golongan: Banyak bernilai NULL (perlu diisi manual sesuai kebutuhan)
--- Katagori: Jenis sediaan (Tablet, Kapsul, Sirup, dll)
--- =============================================================================
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `apotek`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `tab_obat_mst`
+--
+
+CREATE TABLE `tab_obat_mst` (
+  `ID_Obat` int(11) NOT NULL,
+  `Nama_obat` varchar(35) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `Golongan` char(10) DEFAULT NULL,
+  `Katagori` char(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `harga` decimal(10,0) DEFAULT NULL,
+  `Minimum` decimal(10,0) DEFAULT NULL,
+  `lokasi` char(5) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=armscii8 COLLATE=armscii8_bin;
+
+--
+-- Dumping data untuk tabel `tab_obat_mst`
+--
+
 INSERT IGNORE INTO `tab_obat_mst` (`ID_Obat`, `Nama_obat`, `Golongan`, `Katagori`, `harga`, `Minimum`, `lokasi`) VALUES
 (1, 'ZITANID', NULL, 'Tablet', 7830, 40, 'K5'),
 (2, 'Amoxicillin 500mg', 'Antibiotik', 'Kapsul', 15000, 10, 'B2'),
@@ -5647,12 +5657,17 @@ INSERT IGNORE INTO `tab_obat_mst` (`ID_Obat`, `Nama_obat`, `Golongan`, `Katagori
 (13549, 'IZAURA 600ML', NULL, NULL, 15000, 0, 'G'),
 (13550, 'NUTRAFOR JOINTS POWDER/BOX', NULL, NULL, 98000, 0, '0');
 
+--
+-- Indexes for dumped tables
+--
 
+--
+-- Indeks untuk tabel `tab_obat_mst`
+--
+ALTER TABLE `tab_obat_mst`
+  ADD PRIMARY KEY (`ID_Obat`);
 COMMIT;
 
--- *****************************************************************************
--- Verifikasi data yang sudah di-insert
--- *****************************************************************************
-SELECT 'Data awal berhasil di-insert!' AS Status;
-SELECT COUNT(*) AS 'Jumlah User' FROM Tab_User;
-SELECT COUNT(*) AS 'Jumlah Obat' FROM Tab_Obat_Mst;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
