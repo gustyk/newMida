@@ -127,10 +127,22 @@ begin
     // Jika database ada, cek tabel-tabel penting
     Koneksi.Database := 'apotek';
     
+    if not CekTabelAda(Koneksi, 'Tab_User') then
+    begin
+      AdaError := True;
+      PesanError := PesanError + '- Tabel "Tab_User" belum dibuat' + #13#10;
+    end;
+    
     if not CekTabelAda(Koneksi, 'Tab_Obat_Mst') then
     begin
       AdaError := True;
       PesanError := PesanError + '- Tabel "Tab_Obat_Mst" belum dibuat' + #13#10;
+    end;
+    
+    if not CekTabelAda(Koneksi, 'Tab_Obat_Dtl') then
+    begin
+      AdaError := True;
+      PesanError := PesanError + '- Tabel "Tab_Obat_Dtl" belum dibuat' + #13#10;
     end;
     
     if not CekTabelAda(Koneksi, 'Tab_Mut_Mst') then
@@ -143,12 +155,6 @@ begin
     begin
       AdaError := True;
       PesanError := PesanError + '- Tabel "Tab_Mut_Dtl" belum dibuat' + #13#10;
-    end;
-    
-    if not CekTabelAda(Koneksi, 'Tab_User') then
-    begin
-      AdaError := True;
-      PesanError := PesanError + '- Tabel "Tab_User" belum dibuat' + #13#10;
     end;
   end;
 

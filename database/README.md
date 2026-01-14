@@ -3,6 +3,8 @@
 ## 📋 Deskripsi
 Folder ini berisi SQL scripts untuk setup database aplikasi PKasir (Point of Sales Apotek).
 
+**Catatan Penting:** Database dikembangkan secara **bertahap** sesuai kebutuhan pengembangan kode, bukan dibuat ideal dari awal.
+
 ## 🚀 Cara Setup Database (Komputer Baru)
 
 ### Metode 1: Via phpMyAdmin
@@ -30,77 +32,131 @@ mysql -u root -p < 03_initial_data.sql
 | File | Deskripsi | Wajib? |
 |------|-----------|--------|
 | `01_create_database.sql` | Membuat database `apotek` | ✅ Ya |
-| `02_create_tables.sql` | Membuat semua tabel | ✅ Ya |
+| `02_create_tables.sql` | Membuat 5 tabel dasar | ✅ Ya |
 | `03_initial_data.sql` | Data awal untuk testing | ⚪ Optional |
 
-## 🗄️ Struktur Database
+## 🗄️ Struktur Database (Tahap Awal)
 
 ### Database: `apotek`
 
-#### Tabel: `Tab_Obat_Mst` (Master Data Obat)
+Pada tahap pengembangan ini, database memiliki **5 tabel**:
+
+---
+
+#### Tabel 1: `Tab_User` (Master Data User)
+Daftar pengguna untuk login ke sistem.
+
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
-| ID_Obat | INT (PK, AI) | ID unik obat |
-| Nama_Obat | VARCHAR(100) | Nama obat |
-| Harga | DECIMAL(15,2) | Harga jual |
-| Lokasi | VARCHAR(50) | Lokasi penyimpanan (contoh: Rak A1) |
-| Satuan | VARCHAR(20) | Satuan (Strip/Botol/Box/dll) |
-| Kategori | VARCHAR(50) | Kategori obat |
-| Stok_Min | INT | Stok minimum (untuk alert) |
-| Status_Aktif | TINYINT(1) | 1=Aktif, 0=Nonaktif |
-| Tgl_Input | DATETIME | Tanggal input data |
-| Tgl_Update | DATETIME | Tanggal terakhir update |
+| **nama** | VARCHAR(50) PK | Username untuk login |
+| **password** | VARCHAR(50) | Password user |
+| **shift** | VARCHAR(20) | Shift kerja (Pagi/Siang/Malam) |
 
-#### Tabel: `Tab_Mut_Mst` (Master/Header Mutasi Obat)
+---
+
+#### Tabel 2: `Tab_Obat_Mst` (Master Data Obat)
+Header data obat dengan informasi lengkap harga dan stok.
+
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
-| No_Mutasi | VARCHAR(50) (PK) | Nomor mutasi unik (format: JUAL-YYYYMMDD-XXXX) |
-| Tgl_Mutasi | DATETIME | Tanggal mutasi |
-| Kode_Mutasi | VARCHAR(20) | JUAL/MASUK/KELUAR/RETUR/OPNAME/RUSAK/KADALUARSA/PINDAH |
-| Keterangan_Mutasi | VARCHAR(100) | Deskripsi singkat mutasi |
-| ID_User | VARCHAR(20) | User yang melakukan mutasi |
-| Shift | VARCHAR(10) | Shift kerja (Pagi/Siang/Malam) |
-| Grand_Total | DECIMAL(15,2) | Total keseluruhan (untuk JUAL) |
-| Cara_Bayar | ENUM | Tunai/Qris/BCA/BRI/BNI/Hallo DOC/BPJS/Transfer/Kredit |
-| Jumlah_Bayar | DECIMAL(15,2) | Jumlah yang dibayar customer (untuk JUAL) |
-| Kembalian | DECIMAL(15,2) | Kembalian (untuk JUAL) |
-| Status | ENUM | DRAFT/PENDING/SELESAI/BATAL |
-| Keterangan | TEXT | Catatan lengkap mutasi |
+| **OBT_ID** | INT(11) PK | ID unik obat |
+| **OBT_NM** | VARCHAR(30) | Nama obat |
+| OBT_CATEGORY | VARCHAR(15) | Kategori obat |
+| PRC_RETAIL | DOUBLE | Harga jual retail |
+| PRC_PURCNET | DOUBLE | Harga beli netto |
+| OBT_QTY | DOUBLE | Quantity/jumlah stok |
+| OBT_MINQTY | DOUBLE | Stok minimum |
+| BOX_CONTAIN | INT(11) | Isi per box |
+| SatuanEcer | VARCHAR(15) | Satuan ecer (Strip/Botol/dll) |
+| PRC_BOX | DOUBLE(15,3) | Harga per box |
+| OBT_LOCATION | VARCHAR(10) | Lokasi penyimpanan |
+| MODIFY | INT(11) | Flag modifikasi |
+| EMP_ID | INT(11) | ID employee yang input |
+| STOCK_OP | INT(11) | Stock opname |
+| BARCODE | VARCHAR(15) | Barcode obat |
+| CODE | VARCHAR(15) | Kode obat |
+| LAST_ORDER | INT(11) | Pesanan terakhir |
 
-**Kode Mutasi yang dapat digunakan:**
-- **JUAL**: Penjualan ke customer (mengurangi stok)
-- **MASUK**: Pembelian/penerimaan obat dari supplier (menambah stok)
-- **KELUAR**: Pengeluaran obat non-penjualan (mengurangi stok)
-- **RETUR**: Retur dari customer (menambah stok)
-- **OPNAME**: Stock opname (koreksi stok)
-- **RUSAK**: Obat rusak (mengurangi stok)
-- **KADALUARSA**: Obat kadaluarsa (mengurangi stok)
-- **PINDAH**: Pindah lokasi/gudang (tidak mengubah stok total)
+---
 
-#### Tabel: `Tab_Mut_Dtl` (Detail Mutasi Obat)
+#### Tabel 3: `Tab_Obat_Dtl` (Detail Stok Obat)
+Detail stok obat per item.
+
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
-| ID_Detail | INT (PK, AI) | ID unik detail |
-| No_Mutasi | VARCHAR(50) (FK) | Referensi ke Tab_Mut_Mst |
-| ID_Obat | INT (FK) | Referensi ke Tab_Obat_Mst |
-| Jumlah | DECIMAL(10,2) | Jumlah obat (+ untuk masuk, - untuk keluar) |
-| Harga | DECIMAL(15,2) | Harga per unit |
-| Diskon_Persen | DECIMAL(5,2) | Diskon dalam persen (%) |
-| Diskon_Rupiah | DECIMAL(15,2) | Diskon dalam rupiah |
-| Embalase | DECIMAL(15,2) | Biaya embalase |
-| SubTotal | DECIMAL(15,2) | SubTotal = (Harga × Jumlah) - Diskon + Embalase |
-| Keterangan | VARCHAR(255) | Catatan tambahan per item |
+| **ID_STOCK** | INT(11) PK AI | ID unique stok |
+| ID_OBAT | INT(11) | Referensi ke OBT_ID di Tab_Obat_Mst |
+| STOCK | DECIMAL(10,0) | Jumlah stok |
+| BARCODE | VARCHAR(15) | Barcode item |
 
-#### Tabel: `Tab_User` (Master User)
+---
+
+#### Tabel 4: `Tab_Mut_Mst` (Header Mutasi Stok)
+Header/kepala dari mutasi stok obat (keluar/masuk).
+
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
-| ID_User | VARCHAR(20) (PK) | Username untuk login |
-| Nama_User | VARCHAR(100) | Nama lengkap user |
-| Password | VARCHAR(255) | Password (plaintext - TODO: encrypt) |
-| Level | ENUM | Admin/Kasir/Manager |
-| Status_Aktif | TINYINT(1) | 1=Aktif, 0=Nonaktif |
-| Tgl_Input | DATETIME | Tanggal input data |
-| Tgl_Update | DATETIME | Tanggal terakhir update |
+| MUT_ID | VARCHAR(13) | ID mutasi unik |
+| **MUT_TYPE** | VARCHAR(2) | Jenis mutasi (01=Beli, 02=Jual, dst) |
+| MUT_INPDATE | DATETIME | Tanggal input mutasi |
+| FAK_NO | VARCHAR(30) | Nomor faktur |
+| FAK_DATE | DATETIME | Tanggal faktur |
+| SUP_ID | VARCHAR(3) | ID supplier |
+| MUT_VALUE | DOUBLE(15,3) | Nilai mutasi |
+| PPN | DOUBLE(15,3) | Nilai PPN |
+| PPN_INCLUDED | TINYINT(1) | PPN sudah termasuk? |
+| PAY_TYPE | VARCHAR(1) | Tipe pembayaran (C=Cash, dll) |
+| PAY_DATE | DATETIME | Tanggal pembayaran |
+| MUT_TO | VARCHAR(25) | Mutasi ke siapa/mana |
+| REQ_ID | VARCHAR(20) | ID permintaan |
+| EMP_ID | INT(11) | ID employee |
+| IS_LOCKED | TINYINT(4) | Status locked |
+| MUT_STATUS | INT(4) | Status mutasi |
+| jenis_nota | VARCHAR(20) | Jenis nota |
+
+**Kode MUT_TYPE (contoh):**
+- `01` = Pembelian/Stock In
+- `02` = Penjualan/Stock Out
+- `03` = Retur
+- `04` = Pindah gudang
+- Dan seterusnya sesuai kebutuhan
+
+---
+
+#### Tabel 5: `Tab_Mut_Dtl` (Detail Mutasi Stok)
+Detail item obat per mutasi dengan perhitungan harga lengkap.
+
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| **MUT_NO** | INT(11) PK AI | Nomor urut mutasi |
+| MUT_ID | VARCHAR(20) | Referensi ke MUT_ID di Tab_Mut_Mst |
+| OBT_ID | INT(11) | Referensi ke OBT_ID di Tab_Obat_Mst |
+| OBT_NM | VARCHAR(30) | Nama obat (denormalisasi) |
+| PRC_BOX | DOUBLE(15,3) | Harga per box |
+| OBT_QTY | DOUBLE | Quantity obat |
+| PRC_BON | INT(11) | Harga bonus |
+| PRC_DISCNUM | DOUBLE(15,3) | Diskon nominal |
+| PRC_DISCPERC | DOUBLE(15,3) | Diskon persentase |
+| PUR_TOT | DOUBLE(15,3) | Total pembelian |
+| PRC_PURCNET | DOUBLE(15,3) | Harga beli netto |
+| PRC_PURCGROSS | DOUBLE(15,3) | Harga beli gross |
+| PRC_PURCNET_TOT | DOUBLE(15,3) | Total harga beli netto |
+| PRC_RETAIL | DOUBLE(15,3) | Harga retail |
+| BOX_QTY | DOUBLE(15,3) | Quantity box |
+| BOX_CONTAIN | INT(11) | Isi per box |
+| PPN_FLAG | DOUBLE | Flag PPN |
+| OBT_LOCATION | VARCHAR(5) | Lokasi obat |
+| EMP_ID | INT(11) | ID employee |
+| STOK | INT(11) | Stok saat ini |
+| RET_MUT_ID | VARCHAR(30) | ID mutasi retur |
+| MUT_DATE | DATETIME | Tanggal mutasi |
+| MUT_STATUS | INT(11) | Status mutasi |
+| MUT_TYPE | INT(11) | Tipe mutasi |
+| PRC_RETAIL_TOT | DOUBLE | Total harga retail |
+| PRC_RETAILNET_TOT | DOUBLE | Total harga retail netto |
+| EMBALASE | DOUBLE | Biaya embalase |
+
+---
 
 ## 🔧 Verifikasi Database
 
@@ -115,53 +171,62 @@ USE apotek;
 SHOW TABLES;
 
 -- Cek struktur tabel
+DESCRIBE Tab_User;
 DESCRIBE Tab_Obat_Mst;
+DESCRIBE Tab_Obat_Dtl;
 DESCRIBE Tab_Mut_Mst;
 DESCRIBE Tab_Mut_Dtl;
-DESCRIBE Tab_User;
 
 -- Cek data awal
 SELECT * FROM Tab_User;
 SELECT * FROM Tab_Obat_Mst;
+SELECT * FROM Tab_Obat_Dtl;
 ```
 
 ## 📝 Catatan Penting
 
-1. **Backup Database**: Sebelum menjalankan migration, backup dulu database yang ada:
+1. **Database Bertahap**: Struktur database akan berkembang sesuai kebutuhan kode. Ini bukan design ideal dari awal, tapi disesuaikan dengan kebutuhan pengguna.
+
+2. **Backup Database**: Sebelum menjalankan perubahan, backup dulu database:
    ```sql
    mysqldump -u root -p apotek > backup_apotek_YYYYMMDD.sql
    ```
 
-2. **Restore Database**:
+3. **Restore Database**:
    ```bash
    mysql -u root -p apotek < backup_apotek_YYYYMMDD.sql
    ```
 
-3. **Password Default**:
-   - User: `admin`, Password: `admin123`
-   - User: `kasir1`, Password: `kasir123`
+4. **Password Default**:
+   - User: `admin`, Password: `admin123`, Shift: `Pagi`
+   - User: `kasir1`, Password: `kasir123`, Shift: `Pagi`
+   - User: `kasir2`, Password: `kasir123`, Shift: `Siang`
    - **⚠️ GANTI PASSWORD setelah setup!**
 
-4. **Koneksi di Delphi**:
+5. **Koneksi di Delphi**:
    - Host: `localhost`
    - Port: `3306`
    - Database: `apotek`
    - User: `root`
    - Password: (sesuaikan dengan setting MySQL Anda)
 
-## 🔄 Update Schema (Migrasi)
+## 🔄 Pengembangan Database Selanjutnya
 
-Jika ada perubahan struktur database:
-1. Buat file baru: `04_alter_xxx.sql`
-2. Gunakan `ALTER TABLE` bukan `CREATE TABLE`
-3. Commit file SQL ke Git
-4. Update dokumentasi ini
+Ketika ada penambahan tabel atau perubahan struktur:
+1. Buat file baru: `04_alter_xxx.sql` atau `05_create_xxx.sql`
+2. Commit ke Git dengan deskripsi jelas
+3. Update dokumentasi ini
+4. Informasikan ke tim developer lain
 
 Contoh:
 ```sql
--- 04_alter_add_kolom_barcode.sql
+-- 04_add_table_supplier.sql
 USE apotek;
-ALTER TABLE Tab_Obat_Mst ADD COLUMN Barcode VARCHAR(50) AFTER Nama_Obat;
+CREATE TABLE IF NOT EXISTS Tab_Supplier (
+  SUP_ID VARCHAR(3) PRIMARY KEY,
+  SUP_NAME VARCHAR(50),
+  ...
+);
 ```
 
 ## ⚠️ Troubleshooting
@@ -176,43 +241,14 @@ ALTER TABLE Tab_Obat_Mst ADD COLUMN Barcode VARCHAR(50) AFTER Nama_Obat;
 - Pastikan user MySQL memiliki privilege yang cukup
 - Gunakan user `root` atau user dengan `GRANT ALL PRIVILEGES`
 
-**Error: Foreign key constraint fails**
-- Pastikan menjalankan script secara berurutan
-- Tab_Obat_Mst dan Tab_Mut_Mst harus dibuat dulu sebelum Tab_Mut_Dtl
+## 💡 Konsep Nama Field
 
-## 💡 Konsep Mutasi
+Database ini menggunakan konvensi penamaan yang **existing/legacy**:
+- `OBT_` = Obat (medicine)
+- `PRC_` = Price (harga)
+- `MUT_` = Mutasi (mutation/movement)
+- `SUP_` = Supplier
+- `EMP_` = Employee
+- `FAK_` = Faktur (invoice)
 
-Sistem menggunakan konsep **Mutasi** untuk semua pergerakan obat:
-- **Header Mutasi** (`Tab_Mut_Mst`) menyimpan informasi umum: siapa, kapan, jenis mutasi apa
-- **Detail Mutasi** (`Tab_Mut_Dtl`) menyimpan item-item obat yang terlibat dalam mutasi tersebut
-
-**Contoh Penggunaan:**
-
-**Penjualan (JUAL):**
-```
-Tab_Mut_Mst:
-  No_Mutasi: JUAL-20260113-0001
-  Kode_Mutasi: JUAL
-  Grand_Total: 50000
-  Cara_Bayar: Tunai
-  Status: SELESAI
-
-Tab_Mut_Dtl:
-  - Paracetamol, Jumlah: 2, Harga: 5000, SubTotal: 10000
-  - OBH Combi, Jumlah: 2, Harga: 20000, SubTotal: 40000
-```
-
-**Pembelian (MASUK):**
-```
-Tab_Mut_Mst:
-  No_Mutasi: MASUK-20260113-0001
-  Kode_Mutasi: MASUK
-  Keterangan_Mutasi: Pembelian dari PT Kimia Farma
-  Status: SELESAI
-
-Tab_Mut_Dtl:
-  - Paracetamol, Jumlah: 100, Harga: 4000
-  - Amoxicillin, Jumlah: 50, Harga: 12000
-```
-
-Sistem ini fleksibel untuk berbagai jenis mutasi stok!
+Pertahankan konvensi ini untuk konsistensi dengan sistem yang sudah berjalan.

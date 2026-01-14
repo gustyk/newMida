@@ -1,102 +1,124 @@
 -- *****************************************************************************
 -- Script: 02_create_tables.sql
--- Deskripsi: Membuat tabel-tabel untuk aplikasi PKasir
--- Tanggal: 2026-01-13
--- Update: Menggunakan konsep Mutasi (Tab_Mut_Mst dan Tab_Mut_Dtl)
--- Catatan: Pastikan database apotek sudah dibuat (jalankan 01_create_database.sql dulu)
+-- Deskripsi: Membuat tabel-tabel untuk aplikasi PKasir (Tahap Awal)
+-- Tanggal: 2026-01-14
+-- Catatan: Database dibuat bertahap sesuai pengembangan, bukan ideal dari awal
 -- *****************************************************************************
 
 USE `apotek`;
 
 -- =============================================================================
--- Tabel: Tab_Obat_Mst (Master Data Obat)
--- Deskripsi: Menyimpan data master obat yang dijual di apotek
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `Tab_Obat_Mst` (
-  `ID_Obat` INT(11) NOT NULL AUTO_INCREMENT,
-  `Nama_Obat` VARCHAR(100) NOT NULL,
-  `Harga` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-  `Lokasi` VARCHAR(50) DEFAULT NULL,
-  `Satuan` VARCHAR(20) DEFAULT 'Strip',
-  `Kategori` VARCHAR(50) DEFAULT NULL,
-  `Stok_Min` INT(11) DEFAULT 10,
-  `Status_Aktif` TINYINT(1) DEFAULT 1,
-  `Tgl_Input` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `Tgl_Update` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ID_Obat`),
-  KEY `idx_nama` (`Nama_Obat`),
-  KEY `idx_kategori` (`Kategori`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Data Obat';
-
--- =============================================================================
--- Tabel: Tab_Mut_Mst (Master/Header Mutasi Obat)
--- Deskripsi: Menyimpan header mutasi obat untuk berbagai keperluan
--- Kode_Mutasi yang dapat digunakan:
---   - JUAL      : Penjualan ke customer
---   - MASUK     : Pembelian/penerimaan obat
---   - KELUAR    : Pengeluaran obat (non-penjualan)
---   - RETUR     : Retur dari customer
---   - OPNAME    : Stock opname
---   - RUSAK     : Obat rusak
---   - KADALUARSA: Obat kadaluarsa
---   - PINDAH    : Pindah lokasi/gudang
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `Tab_Mut_Mst` (
-  `No_Mutasi` VARCHAR(50) NOT NULL,
-  `Tgl_Mutasi` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `Kode_Mutasi` VARCHAR(20) NOT NULL,
-  `Keterangan_Mutasi` VARCHAR(100) DEFAULT NULL,
-  `ID_User` VARCHAR(20) DEFAULT NULL,
-  `Shift` VARCHAR(10) DEFAULT NULL,
-  `Grand_Total` DECIMAL(15,2) DEFAULT 0.00,
-  `Cara_Bayar` ENUM('Tunai','Qris','BCA','BRI','BNI','Hallo DOC','BPJS','Transfer','Kredit') DEFAULT NULL,
-  `Jumlah_Bayar` DECIMAL(15,2) DEFAULT 0.00,
-  `Kembalian` DECIMAL(15,2) DEFAULT 0.00,
-  `Status` ENUM('DRAFT','PENDING','SELESAI','BATAL') DEFAULT 'DRAFT',
-  `Keterangan` TEXT DEFAULT NULL,
-  PRIMARY KEY (`No_Mutasi`),
-  KEY `idx_tanggal` (`Tgl_Mutasi`),
-  KEY `idx_kode` (`Kode_Mutasi`),
-  KEY `idx_user` (`ID_User`),
-  KEY `idx_status` (`Status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Header Mutasi Obat';
-
--- =============================================================================
--- Tabel: Tab_Mut_Dtl (Detail Mutasi Obat)
--- Deskripsi: Menyimpan detail item obat per mutasi (baik keluar maupun masuk)
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `Tab_Mut_Dtl` (
-  `ID_Detail` INT(11) NOT NULL AUTO_INCREMENT,
-  `No_Mutasi` VARCHAR(50) NOT NULL,
-  `ID_Obat` INT(11) NOT NULL,
-  `Jumlah` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  `Harga` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-  `Diskon_Persen` DECIMAL(5,2) DEFAULT 0.00,
-  `Diskon_Rupiah` DECIMAL(15,2) DEFAULT 0.00,
-  `Embalase` DECIMAL(15,2) DEFAULT 0.00,
-  `SubTotal` DECIMAL(15,2) DEFAULT 0.00,
-  `Keterangan` VARCHAR(255) DEFAULT NULL,
-  PRIMARY KEY (`ID_Detail`),
-  KEY `idx_mutasi` (`No_Mutasi`),
-  KEY `idx_obat` (`ID_Obat`),
-  CONSTRAINT `fk_mut_dtl_mst` FOREIGN KEY (`No_Mutasi`) REFERENCES `Tab_Mut_Mst` (`No_Mutasi`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_mut_dtl_obat` FOREIGN KEY (`ID_Obat`) REFERENCES `Tab_Obat_Mst` (`ID_Obat`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Detail Mutasi Obat';
-
--- =============================================================================
--- Tabel: Tab_User (Master Data User/Kasir)
+-- Tabel 1: Tab_User (Master Data User/Kasir)
 -- Deskripsi: Menyimpan data user yang dapat login ke sistem
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS `Tab_User` (
-  `ID_User` VARCHAR(20) NOT NULL,
-  `Nama_User` VARCHAR(100) NOT NULL,
-  `Password` VARCHAR(255) NOT NULL,
-  `Level` ENUM('Admin','Kasir','Manager') DEFAULT 'Kasir',
-  `Status_Aktif` TINYINT(1) DEFAULT 1,
-  `Tgl_Input` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `Tgl_Update` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ID_User`)
+  `nama` VARCHAR(50) NOT NULL,
+  `password` VARCHAR(50) NOT NULL,
+  `shift` VARCHAR(20) DEFAULT NULL,
+  PRIMARY KEY (`nama`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Data User';
+
+-- =============================================================================
+-- Tabel 2: Tab_Obat_Mst (Master Data Obat)
+-- Deskripsi: Header data obat dengan informasi lengkap harga dan stok
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `Tab_Obat_Mst` (
+  `OBT_ID` INT(11) NOT NULL DEFAULT 0,
+  `OBT_NM` VARCHAR(30) NOT NULL,
+  `OBT_CATEGORY` VARCHAR(15) DEFAULT NULL,
+  `PRC_RETAIL` DOUBLE NOT NULL DEFAULT 0,
+  `PRC_PURCNET` DOUBLE NOT NULL DEFAULT 0,
+  `OBT_QTY` DOUBLE DEFAULT NULL,
+  `OBT_MINQTY` DOUBLE NOT NULL DEFAULT 0,
+  `BOX_CONTAIN` INT(11) DEFAULT 0,
+  `SatuanEcer` VARCHAR(15) NOT NULL DEFAULT '',
+  `PRC_BOX` DOUBLE(15,3) DEFAULT 0.000,
+  `OBT_LOCATION` VARCHAR(10) NOT NULL DEFAULT '',
+  `MODIFY` INT(11) NOT NULL DEFAULT 0,
+  `EMP_ID` INT(11) NOT NULL DEFAULT 0,
+  `STOCK_OP` INT(11) DEFAULT NULL,
+  `BARCODE` VARCHAR(15) DEFAULT NULL,
+  `CODE` VARCHAR(15) DEFAULT NULL,
+  `LAST_ORDER` INT(11) DEFAULT 0,
+  PRIMARY KEY (`OBT_ID`),
+  KEY `idx_nama` (`OBT_NM`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Data Obat';
+
+-- =============================================================================
+-- Tabel 3: Tab_Obat_Dtl (Detail Stok Obat)
+-- Deskripsi: Detail stok obat per item dengan barcode
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `Tab_Obat_Dtl` (
+  `ID_STOCK` INT(11) NOT NULL AUTO_INCREMENT,
+  `ID_OBAT` INT(11) NOT NULL DEFAULT 0,
+  `STOCK` DECIMAL(10,0) DEFAULT NULL,
+  `BARCODE` VARCHAR(15) DEFAULT NULL,
+  PRIMARY KEY (`ID_STOCK`),
+  KEY `idx_obat` (`ID_OBAT`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Detail Stok Obat';
+
+-- =============================================================================
+-- Tabel 4: Tab_Mut_Mst (Header Mutasi/Perubahan Stok Obat)
+-- Deskripsi: Header mutasi obat (pembelian, penjualan, retur, dll)
+-- MUT_TYPE: Jenis mutasi (contoh: 01=Pembelian, 02=Penjualan, dst)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `Tab_Mut_Mst` (
+  `MUT_ID` VARCHAR(13) DEFAULT NULL,
+  `MUT_TYPE` VARCHAR(2) DEFAULT '0',
+  `MUT_INPDATE` DATETIME DEFAULT NULL,
+  `FAK_NO` VARCHAR(30) NOT NULL DEFAULT 'GUDANG',
+  `FAK_DATE` DATETIME DEFAULT NULL,
+  `SUP_ID` VARCHAR(3) DEFAULT '0',
+  `MUT_VALUE` DOUBLE(15,3) DEFAULT 0.000,
+  `PPN` DOUBLE(15,3) DEFAULT 0.000,
+  `PPN_INCLUDED` TINYINT(1) DEFAULT 0,
+  `PAY_TYPE` VARCHAR(1) DEFAULT 'C',
+  `PAY_DATE` DATETIME DEFAULT NULL,
+  `MUT_TO` VARCHAR(25) DEFAULT '',
+  `REQ_ID` VARCHAR(20) DEFAULT '',
+  `EMP_ID` INT(11) NOT NULL DEFAULT 0,
+  `IS_LOCKED` TINYINT(4) DEFAULT 0,
+  `MUT_STATUS` INT(4) DEFAULT 0,
+  `jenis_nota` VARCHAR(20) DEFAULT NULL,
+  KEY `idx_mut_id` (`MUT_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Header Mutasi Stok Obat';
+
+-- =============================================================================
+-- Tabel 5: Tab_Mut_Dtl (Detail Mutasi/Perubahan Stok Obat)
+-- Deskripsi: Detail item obat per mutasi dengan perhitungan harga lengkap
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS `Tab_Mut_Dtl` (
+  `MUT_NO` INT(11) NOT NULL AUTO_INCREMENT,
+  `MUT_ID` VARCHAR(20) DEFAULT NULL,
+  `OBT_ID` INT(11) DEFAULT NULL,
+  `OBT_NM` VARCHAR(30) DEFAULT NULL,
+  `PRC_BOX` DOUBLE(15,3) DEFAULT 0.000,
+  `OBT_QTY` DOUBLE DEFAULT 0,
+  `PRC_BON` INT(11) DEFAULT 0,
+  `PRC_DISCNUM` DOUBLE(15,3) DEFAULT 0.000,
+  `PRC_DISCPERC` DOUBLE(15,3) DEFAULT 0.000,
+  `PUR_TOT` DOUBLE(15,3) DEFAULT 0.000,
+  `PRC_PURCNET` DOUBLE(15,3) DEFAULT 0.000,
+  `PRC_PURCGROSS` DOUBLE(15,3) DEFAULT 0.000,
+  `PRC_PURCNET_TOT` DOUBLE(15,3) DEFAULT 0.000,
+  `PRC_RETAIL` DOUBLE(15,3) DEFAULT 0.000,
+  `BOX_QTY` DOUBLE(15,3) DEFAULT 0.000,
+  `BOX_CONTAIN` INT(11) DEFAULT 0,
+  `PPN_FLAG` DOUBLE DEFAULT 0,
+  `OBT_LOCATION` VARCHAR(5) DEFAULT NULL,
+  `EMP_ID` INT(11) NOT NULL DEFAULT 0,
+  `STOK` INT(11) DEFAULT 0,
+  `RET_MUT_ID` VARCHAR(30) DEFAULT '',
+  `MUT_DATE` DATETIME DEFAULT NULL,
+  `MUT_STATUS` INT(11) DEFAULT 0,
+  `MUT_TYPE` INT(11) DEFAULT 0,
+  `PRC_RETAIL_TOT` DOUBLE DEFAULT 0,
+  `PRC_RETAILNET_TOT` DOUBLE DEFAULT 0,
+  `EMBALASE` DOUBLE DEFAULT 0,
+  PRIMARY KEY (`MUT_NO`),
+  KEY `idx_mut_id` (`MUT_ID`),
+  KEY `idx_obt_id` (`OBT_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Detail Mutasi Stok Obat';
 
 -- Tampilkan konfirmasi
 SELECT 'Semua tabel berhasil dibuat!' AS Status;

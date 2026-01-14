@@ -92,13 +92,14 @@ Setelah menjalankan `03_initial_data.sql`:
 
 ## 📊 Database Schema
 
-### Tabel Utama:
-1. **Tab_Obat_Mst** - Master data obat
-2. **Tab_Mut_Mst** - Master/Header mutasi obat (JUAL/MASUK/KELUAR/RETUR/dll)
-3. **Tab_Mut_Dtl** - Detail mutasi obat per item
-4. **Tab_User** - Master user/kasir
+### Tabel Utama (Tahap Awal - 5 Tabel):
+1. **Tab_User** - Master data user untuk login (nama, password, shift)
+2. **Tab_Obat_Mst** - Master data obat dengan harga dan stok
+3. **Tab_Obat_Dtl** - Detail stok obat per item
+4. **Tab_Mut_Mst** - Header mutasi stok (pembelian, penjualan, retur, dll)
+5. **Tab_Mut_Dtl** - Detail item obat per mutasi
 
-**Konsep Mutasi:** Semua pergerakan obat (penjualan, pembelian, retur, rusak, dll) menggunakan sistem mutasi dengan header (`Tab_Mut_Mst`) dan detail (`Tab_Mut_Dtl`).
+**Catatan:** Database dikembangkan **bertahap** sesuai kebutuhan pengembangan kode, bukan ideal dari awal.
 
 Lihat detail struktur di: [database/README.md](database/README.md)
 

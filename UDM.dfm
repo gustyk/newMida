@@ -102,14 +102,14 @@ object DM: TDM
   end
   object TabObtDet: TZTable
     Connection = Koneksi
-    TableName = 'tab_mut_dtl'
+    TableName = 'Tab_Obat_Dtl'
     Left = 72
     Top = 112
   end
   object Que_stock: TZQuery
     Connection = Koneksi
     SQL.Strings = (
-      'select * from Tab_Mut_Dtl')
+      'select * from Tab_Obat_Dtl')
     Params = <>
     Left = 72
     Top = 64
