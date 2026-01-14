@@ -3,10 +3,10 @@ unit UDM;
 interface
 
 uses
-  SysUtils, Classes, Dialogs, ZAbstractConnection, ZConnection, DB,
-  ZAbstractRODataset, ZAbstractDataset, ZDataset, DBClient, Provider,
-  MemDS, ZAbstractTable;
-  // VirtualTable; // Comment dulu jika UNIDAC belum ter-install
+  SysUtils, Classes, Dialogs, DB, DBClient, Provider,
+  ZAbstractConnection, ZConnection, ZAbstractRODataset, 
+  ZAbstractDataset, ZDataset, ZAbstractTable,
+  MemDS, VirtualTable;
 
 type
   TDM = class(TDataModule)
@@ -59,24 +59,28 @@ end;
 // *****************************************************************************
 procedure TDM.InisialisasiKoneksi();
 begin
-  // Pastikan koneksi disconnect dulu
-  if Koneksi.Connected then
-    Koneksi.Disconnect;
-    
   try
+    // Pastikan database di-set ke 'apotek'
+    if Koneksi.Database <> 'apotek' then
+      Koneksi.Database := 'apotek';
+    
+    // Jika belum connected, connect sekarang
+    if not Koneksi.Connected then
+      Koneksi.Connect;
+    
     // Validasi database dan tabel
     ValidasiDatabase(Koneksi);
     
-    // Jika lolos validasi, koneksi sudah connected di ValidasiDatabase
+    // Koneksi berhasil
     if Koneksi.Connected then
     begin
-      // Koneksi berhasil, tidak perlu pesan
-      // ShowMessage('Koneksi database berhasil!');
+      // Koneksi database berhasil
     end;
   except
     on E: Exception do
     begin
-      ShowMessage('Error saat inisialisasi database: ' + E.Message);
+      ShowMessage('Error saat inisialisasi database: ' + E.Message + #13#10 +
+                  'Pastikan MySQL Server sudah running dan database apotek sudah dibuat.');
     end;
   end;
 end;

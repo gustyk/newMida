@@ -99,9 +99,9 @@ end;
 procedure TFrm_Jual.Edt_ObatChange(Sender: TObject);
 begin
  DM.CDS_Obat.Active := false;
- DM.Que_Obat.SQL.Text  := format('(select ID_Obat,Nama_Obat,'+
- 'Harga,Lokasi from Tab_Obat_mst'+
- ' where Nama_Obat LIKE ''%s'')',[edt_Obat.Text+'%'] );
+ DM.Que_Obat.SQL.Text  := format('(select ID_Obat, Nama_obat, '+
+ 'harga, lokasi from Tab_Obat_mst'+
+ ' where Nama_obat LIKE ''%s'')',[edt_Obat.Text+'%'] );
  DM.Que_Obat.Open;
  DM.CDS_Obat.Active := true;
 
@@ -113,10 +113,10 @@ begin
   begin
    VT.Active := True;
    VT.Append;
-   VT.FieldByName('ID_OBAT').Asinteger := CDS_Obat.fieldbyName('ID_OBAT').asinteger;
-   VT.FieldByName('Nama_Obat').AsString := CDS_Obat.fieldbyName('NAMA_OBAT').AsString;
-   VT.FieldByName('Harga').AsString := CDS_Obat.fieldbyName('HARGA').AsString;
-   VT.FieldByName('JUMLAH').AsString := '1';     // devoult = 1;
+   VT.FieldByName('ID_OBAT').Asinteger := CDS_Obat.fieldbyName('ID_Obat').asinteger;
+   VT.FieldByName('Nama_Obat').AsString := CDS_Obat.fieldbyName('Nama_obat').AsString;
+   VT.FieldByName('Harga').AsString := CDS_Obat.fieldbyName('harga').AsString;
+   VT.FieldByName('JUMLAH').AsString := '1';     // default = 1;
    Grid_Jual.EditorMode := true;               // Warna jadi biru
    Grid_JUal.Fields[3].FocusControl;            // Ke kolom Jumlah
   end;

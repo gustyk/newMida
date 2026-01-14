@@ -33,7 +33,7 @@ object DM: TDM
     Top = 16
   end
   object VT: TVirtualTable
-    Active = True
+    Active = False
     FieldDefs = <
       item
         Name = 'No'
@@ -137,7 +137,7 @@ object DM: TDM
     AutoEncodeStrings = False
     Properties.Strings = (
       'RawStringEncoding=DB_CP')
-    Connected = True
+    Connected = False
     HostName = 'localhost'
     Port = 3306
     Database = 'apotek'

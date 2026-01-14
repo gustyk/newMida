@@ -21,27 +21,17 @@ CREATE TABLE IF NOT EXISTS `Tab_User` (
 -- =============================================================================
 -- Tabel 2: Tab_Obat_Mst (Master Data Obat)
 -- Deskripsi: Header data obat dengan informasi lengkap harga dan stok
+-- Struktur disesuaikan dengan database yang sudah ada
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS `Tab_Obat_Mst` (
-  `OBT_ID` INT(11) NOT NULL DEFAULT 0,
-  `OBT_NM` VARCHAR(30) NOT NULL,
-  `OBT_CATEGORY` VARCHAR(15) DEFAULT NULL,
-  `PRC_RETAIL` DOUBLE NOT NULL DEFAULT 0,
-  `PRC_PURCNET` DOUBLE NOT NULL DEFAULT 0,
-  `OBT_QTY` DOUBLE DEFAULT NULL,
-  `OBT_MINQTY` DOUBLE NOT NULL DEFAULT 0,
-  `BOX_CONTAIN` INT(11) DEFAULT 0,
-  `SatuanEcer` VARCHAR(15) NOT NULL DEFAULT '',
-  `PRC_BOX` DOUBLE(15,3) DEFAULT 0.000,
-  `OBT_LOCATION` VARCHAR(10) NOT NULL DEFAULT '',
-  `MODIFY` INT(11) NOT NULL DEFAULT 0,
-  `EMP_ID` INT(11) NOT NULL DEFAULT 0,
-  `STOCK_OP` INT(11) DEFAULT NULL,
-  `BARCODE` VARCHAR(15) DEFAULT NULL,
-  `CODE` VARCHAR(15) DEFAULT NULL,
-  `LAST_ORDER` INT(11) DEFAULT 0,
-  PRIMARY KEY (`OBT_ID`),
-  KEY `idx_nama` (`OBT_NM`)
+  `ID_Obat` INT(11) NOT NULL,
+  `Nama_obat` VARCHAR(35) NOT NULL,
+  `Golongan` CHAR(10) DEFAULT NULL,
+  `Katagori` CHAR(10) DEFAULT NULL,
+  `harga` DECIMAL(10,0) DEFAULT NULL,
+  `Minimum` DECIMAL(10,0) DEFAULT NULL,
+  `lokasi` CHAR(5) DEFAULT NULL,
+  PRIMARY KEY (`ID_Obat`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Master Data Obat';
 
 -- =============================================================================
