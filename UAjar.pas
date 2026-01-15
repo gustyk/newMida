@@ -172,6 +172,7 @@ begin
    VT.FieldByName('Nama_Obat').AsString := CDS_Obat.fieldbyName('NAMA_OBAT').AsString;
    VT.FieldByName('Harga').AsString := CDS_Obat.fieldbyName('HARGA').AsString;
    VT.FieldByName('JUMLAH').AsString := '1';     // devoult = 1;
+   VT.Post; // Post untuk simpan record ke VirtualTable
    Grid_Jual.EditorMode := true;               // Warna jadi biru
    Grid_JUal.Fields[3].FocusControl;            // Ke kolom Jumlah
   end;

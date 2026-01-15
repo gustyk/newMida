@@ -14,9 +14,9 @@ uses
 
 begin
   Application.Initialize;
+  Application.CreateForm(TDM, DM);
   Application.CreateForm(TFrm_Login, Frm_Login);
   Application.CreateForm(TFrm_Jual, Frm_Jual);
-  Application.CreateForm(TDM, DM);
   Application.CreateForm(TFrm_Test, Frm_Test);
   Application.CreateForm(TFrm_Bayar, Frm_Bayar);
   Application.CreateForm(TFrm_Racik, Frm_Racik);
